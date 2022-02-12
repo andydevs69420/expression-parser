@@ -181,6 +181,7 @@ int isoperator(State *S)
         case '(':
         case ')':
         case '.':
+        case '^': // use xor(^) as exponential
         case '*':
         case '/':
         case '+':

@@ -15,9 +15,10 @@ enum TokenType
 {
     IDN = 0,
     INT = 1,
-    OPT = 2,
-    ERR = 3,
-    END = 4,
+    FLT = 2,
+    OPT = 3,
+    ERR = 4,
+    END = 5,
 };
 
 typedef struct TOKEN
