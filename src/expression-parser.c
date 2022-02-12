@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "state.h"
-#include "tokenizer.h"
+#include "parser.h"
 
 int main()
 {
@@ -33,9 +33,9 @@ int main()
         printf("Prelude:>> ");
         scanf("%[^\n]s",expr);
         fflush(stdin);
-        Tokenizer(state,expr);
-        Token tok = getNext(state);
-        printf("expr: %s %s \n",expr,tok.token);
+        Parser(state,expr);
+        Node *ast = parse(state);
+        printf("expr: %s %d \n",expr,ast->type);
 
     } while (strcmp(expr,"quit") != 0);
 

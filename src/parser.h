@@ -12,10 +12,12 @@
 
 typedef struct ATOM_NODE Iden_node;
 typedef struct ATOM_NODE Int_node;
-typedef struct FLT_NODE Flt_node;
+typedef struct ATOM_NODE Flt_node;
 typedef struct CALL_NODE Call_node;
-typedef struct EXPRESSION_NODE Expression_node;
+typedef struct CALL_PARAM Call_param;
+typedef struct EXPRESSION_NODE Exponential_node;
 typedef struct EXPRESSION_NODE Arithmetic_node;
+typedef struct UNARY_NODE Unary_node;
 
 enum NodeType
 {
@@ -23,7 +25,9 @@ enum NodeType
     NINT  = 1,
     NFLT  = 2,
     NCALL = 3,
-    NEXP  = 4
+    NEXP  = 4,
+    NUNA  = 5,
+    NARI  = 6
 };
 
 typedef struct NODE
@@ -34,6 +38,8 @@ typedef struct NODE
     Flt_node *floatn;
     Call_node *call;
     Exponential_node *expn;
+    Unary_node *unary;
+    Arithmetic_node *arithmetic;
 } Node ;
 
 typedef struct ATOM_NODE
@@ -60,19 +66,29 @@ typedef struct EXPRESSION_NODE
     Node *rhs;
 } Exponential_node , Arithmetic_node;
 
+typedef struct UNARY_NODE
+{
+    Token op;
+    Node *expr;
+} Unary_node ;
+
+
 void Parser(State*,char*);
 int match(State*,char*);
 void expect(State*,char*);
-void parse(State*);
-
+Node *parse(State*);
 Node *atom(State*);
 Node *iden(State*);
 Node *integer(State*);
-Node *number(State*);
+Node *pnumber(State*);
 Node *call(State*);
 Call_param *call_params(State*);
 Node *exponential(State*);
+Node *factor(State*);
+Node *multiplicative(State*);
+Node *addetive(State*);
 Node *expression(State*);
+Node *null_safe_expr(State*);
 
 int parseeof(State*);
 

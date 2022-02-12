@@ -200,6 +200,7 @@ Token operator(State *S)
 
     newBuilder();
     pushChar(S->tokenizer.lookup);
+    forward(S);
     tok.token = getBuilder();
     return tok;
 }
@@ -212,7 +213,7 @@ int iseof(State *S)
 Token _feof(State *S)
 {
     Token tok;
-    tok.type  = OPT;
+    tok.type  = END;
     tok.line  = S->tokenizer.line;
     tok.colm  = S->tokenizer.column;
     tok.token = "eof";
@@ -234,7 +235,7 @@ char *getPos(State *S,Token tok)
 
     pushChar('\n');
     
-    for (idx = 0; idx < strlen(S->expression);idx++)
+    for (idx = 0; idx <= strlen(S->expression);idx++)
     {
         if ((idx+1) >= tok.colm && (idx+1) <= (tok.colm + (strlen(tok.token)-1)))
         {

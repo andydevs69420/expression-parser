@@ -3,6 +3,7 @@
  *   All rights reserved.
  */
 
+#include "token.h"
 
 #ifndef STATE_H
 #define STATE_H
@@ -22,7 +23,7 @@ typedef struct SHARED_STATE
 
     struct PARSER_STATE
     {
-        
+
         Token ctok;
     } parser ;
     

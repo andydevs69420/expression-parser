@@ -14,9 +14,14 @@
 void Parser(State *S,char *expr)
 {
     Tokenizer(S,expr);
-    
     S->parser.ctok = getNext(S);
 
+    //  printf(
+    //     "SyntaxError: invalid syntax \"%s\"\n\n%s\n\n",
+    //     S->parser.ctok.token,
+    //     getPos(S,S->parser.ctok)
+    // );
+    // exit(1);
 }
 
 int match(State *S,char *pattern)
@@ -42,29 +47,32 @@ void expect(State *S,char *pattern)
     }
 }
 
-void parse(State *S)
+Node *parse(State *S)
 {
+    Node *ast;
     while (!parseeof(S))
     {
-
+        ast = null_safe_expr(S);
+        printf("STUCK!!\n");
     }
+    return ast;
 }
 
 
 Node *atom(State *S)
 {
-    if (S->parser.ctok.type == NIDN)
+    if (S->parser.ctok.type == IDN)
     {
         return iden(S);
     }
-    else if (S->parser.ctok.type == NINT)
+    else if (S->parser.ctok.type == INT)
     {
-        return number(S);
+        return pnumber(S);
     }
     return NULL;
 }
 
-Node *ident(State *S)
+Node *iden(State *S)
 {
     Node *node;
     node = (Node*) malloc(sizeof(Node));
@@ -92,7 +100,7 @@ Node *integer(State *S)
     return node;
 }
 
-Node *number(State *S)
+Node *pnumber(State *S)
 {
     Node *intnode = integer(S);
     if 
@@ -156,7 +164,7 @@ Node *call(State *S)
 {
     Node *atomr = atom(S);
 
-    if (!match(S->parser.ctok.token,"(")) return atomr;
+    if (!match(S,"(")) return atomr;
 
     // no recursive all
     // call
@@ -229,9 +237,9 @@ Call_param *call_params(State *S)
     Call_param *cparam;
 
     cparam->pcount = 0;
-    cparam->parameters = (Node*) malloc(sizeof(Node));
+    cparam->parameters = (Node**) malloc(sizeof(Node*));
 
-    Node *param = expresson(S);
+    Node *param = expression(S);
     if (param == NULL) return cparam;
 
     cparam->pcount++;
@@ -256,7 +264,7 @@ Call_param *call_params(State *S)
             printf(
                 "SyntaxError: remove extra \"%s\"\n\n%s\n\n",
                 comma.token,
-                getPos(S,S->parser.ctok)
+                getPos(S,comma)
             );
             exit(1);
         }
@@ -276,35 +284,223 @@ Node *exponential(State *S)
     Node *node = call(S);
     if (node == NULL) return node;
 
-    Node *newn = (Node*) malloc(sizeof(Node));
-    newn->type = NEXP;
-    newn->expn = (Exponential_node*) malloc(sizeof(Exponential_node));
-
-    newn->expn->lhs = node;
-    newn->expn->op  = S->parser.ctok;
-
-    while (!parseeof(S) && match(S,"^")) // use xor(^) as exponential
+    if (match(S,"^"))
     {
-        if (match(S,"^"))
-            nextToken();
-        
-        Node *rhs = exponential(S);
-        
-        if (rhs == NULL)
+        Node *newn = (Node*) malloc(sizeof(Node));
+        newn->type = NEXP;
+        newn->expn = (Exponential_node*) malloc(sizeof(Exponential_node));
+
+        newn->expn->lhs = node;
+        newn->expn->op  = S->parser.ctok;
+
+        while (!parseeof(S) && match(S,"^")) // use xor(^) as exponential
+        {
+            if (match(S,"^"))
+                nextToken();
+            
+            Node *rhs = exponential(S);
+            
+            if (rhs == NULL)
+            {
+                printf(
+                    "SyntaxError: expects \"expression\" after \"%s\", got \"%s\"\n\n%s\n\n",
+                    newn->expn->op.token,
+                    S->parser.ctok.token,
+                    getPos(S,S->parser.ctok)
+                );
+                exit(1);
+            }
+
+            newn->expn->rhs = rhs;
+            node = newn;
+        }
+    }
+
+    return node;
+}
+
+Node *factor(State *S)
+{
+    Token tok = S->parser.ctok;
+
+    if (match(S,"+") || match(S,"-"))
+    {
+        expect(S,tok.token);
+
+        Node *node  = (Node*) malloc(sizeof(Node));
+        node->type  = NUNA;
+        node->unary = (Unary_node*) malloc(sizeof(Unary_node));
+        node->unary->op = tok;
+
+        Node *expr = factor(S);
+
+        if (expr == NULL)
         {
             printf(
                 "SyntaxError: expects \"expression\" after \"%s\", got \"%s\"\n\n%s\n\n",
-                newn->expn->op.token,
+                tok.token,
                 S->parser.ctok.token,
                 getPos(S,S->parser.ctok)
             );
             exit(1);
         }
+        
+        node->unary->expr = factor(S);
+        return node;
+    }
+    else if (match(S,"("))
+    {
+        expect(S,"(");
 
-        newn->expn->rhs = rhs;
+        Node *expr = expression(S);
+
+        if (expr == NULL)
+        {
+            printf(
+                "SyntaxError: expects \"expression\", after \"%s\"\n\n%s\n\n",
+                tok.token,
+                getPos(S,tok)
+            );
+            exit(1);
+        }
+
+        if (!match(S,")"))
+        {
+            printf(
+                "SyntaxError: unclosed parenthesis \"%s\", remove these token\n\n%s\n\n",
+                tok.token,
+                getPos(S,tok)
+            );
+
+            printf(
+                "expected token \"%s\", got \"%s\"\n\n%s\n\n",
+                ")",
+                S->parser.ctok.token,
+                getPos(S,S->parser.ctok)
+            );
+
+            exit(1);
+        }
+
+        expect(S,")");
+
+        return expr;
     }
 
-    return newn;
+    return exponential(S);
+}
+
+Node *multiplicative(State *S)
+{
+    Node *node = factor(S);
+    if (node == NULL) return node;
+
+    
+    if (match(S,"*") || match(S,"/"))
+    {
+        Node *newn = (Node*) malloc(sizeof(Node));
+        newn->type = NARI;
+        newn->arithmetic = (Arithmetic_node*) malloc(sizeof(Arithmetic_node));
+
+        newn->arithmetic->lhs = node;
+        newn->arithmetic->op  = S->parser.ctok;
+
+        while (!parseeof(S) && (match(S,"*") || match(S,"/")))
+        {
+            if (match(S,"*"))
+            {
+                nextToken();
+            }
+            else if (match(S,"/"))
+            {
+                nextToken();
+            }
+
+            Node *rhs = multiplicative(S);
+            
+            if (rhs == NULL)
+            {
+                printf(
+                    "SyntaxError: expects \"expression\" after \"%s\", got \"%s\"\n\n%s\n\n",
+                    newn->arithmetic->op.token,
+                    S->parser.ctok.token,
+                    getPos(S,S->parser.ctok)
+                );
+                exit(1);
+            }
+
+            newn->arithmetic->rhs = rhs;
+            node = newn;
+        }   
+    }
+    return node;
+}
+
+Node *addetive(State *S)
+{
+    Node *node = multiplicative(S);
+    if (node == NULL) return node;
+
+    if (match(S,"+") || match(S,"-"))
+    {
+        Node *newn = (Node*) malloc(sizeof(Node));
+        newn->type = NARI;
+        newn->arithmetic = (Arithmetic_node*) malloc(sizeof(Arithmetic_node));
+
+        newn->arithmetic->lhs = node;
+        newn->arithmetic->op  = S->parser.ctok;
+
+        while (!parseeof(S) && (match(S,"+") || match(S,"-")))
+        {
+            if (match(S,"+"))
+            {
+                nextToken();
+            }
+            else if (match(S,"-"))
+            {
+                nextToken();
+            }
+            
+            Node *rhs = addetive(S);
+            
+            if (rhs == NULL)
+            {
+                printf(
+                    "SyntaxError: expects \"expression\" after \"%s\", got \"%s\"\n\n%s\n\n",
+                    newn->arithmetic->op.token,
+                    S->parser.ctok.token,
+                    getPos(S,S->parser.ctok)
+                );
+                exit(1);
+            }
+
+            newn->arithmetic->rhs = rhs;
+            node = newn;
+        }
+    }
+
+    return node;
+}
+
+Node *expression(State *S)
+{
+    return addetive(S);
+}
+
+Node *null_safe_expr(State *S)
+{
+    Node *expr = expression(S);
+    if (expr == NULL)
+    {
+        printf(
+            "SyntaxError: invalid syntax \"%s\"\n\n%s\n\n",
+            S->parser.ctok.token,
+            getPos(S,S->parser.ctok)
+        );
+        exit(1);
+    }
+
+    return expr;
 }
 
 int parseeof(State *S)
