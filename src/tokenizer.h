@@ -20,7 +20,7 @@ enum TokenType
     END = 4,
 };
 
-typedef struct Token
+typedef struct TOKEN
 {
     int type;
     int line;

@@ -245,6 +245,5 @@ char *getPos(State *S,Token tok)
         }
     }
 
-
     return getBuilder();
 }

@@ -18,6 +18,13 @@ typedef struct SHARED_STATE
         int line;
         int column;
     } tokenizer ;
+
+
+    struct PARSER_STATE
+    {
+        
+        Token ctok;
+    } parser ;
     
 } State ;
 

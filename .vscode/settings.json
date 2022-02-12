@@ -3,6 +3,9 @@
         "initializer_list": "c",
         "type_traits": "c",
         "xstring": "c",
-        "xutility": "c"
+        "xutility": "c",
+        "string.h": "c",
+        "stdio.h": "c",
+        "tokenizer.h": "c"
     }
 }
