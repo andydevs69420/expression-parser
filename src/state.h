@@ -7,9 +7,18 @@
 #ifndef STATE_H
 #define STATE_H
 
-struct SHARED_STATE
+typedef struct SHARED_STATE
 {
-    /* data */
+    char *expression;
+    struct TOKENIZER_STATE
+    {
+        char lookup;
+        int isfeof;
+        int cursor;
+        int line;
+        int column;
+    } tokenizer ;
+    
 } State ;
 
 
