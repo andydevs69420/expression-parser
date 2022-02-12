@@ -342,6 +342,12 @@ Node *factor(State *S)
                 S->parser.ctok.token,
                 getPos(S,S->parser.ctok)
             );
+
+            printf(
+                "invalid expression \"%s\"\n\n%s\n\n",
+                S->parser.ctok.token,
+                getPos(S,S->parser.ctok)
+            );
             exit(1);
         }
         
@@ -361,6 +367,12 @@ Node *factor(State *S)
                 tok.token,
                 getPos(S,tok)
             );
+            printf(
+                "invalid expression \"%s\"\n\n%s\n\n",
+                S->parser.ctok.token,
+                getPos(S,S->parser.ctok)
+            );
+            
             exit(1);
         }
 
