@@ -90,7 +90,6 @@ Node *multiplicative(State*);
 Node *addetive(State*);
 Node *expression(State*);
 Node *null_safe_expr(State*);
-
 int parseeof(State*);
 
 #endif

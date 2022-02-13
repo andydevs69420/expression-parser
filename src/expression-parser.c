@@ -26,12 +26,13 @@ int main()
     printf("Ctrl + c or type \"quit\" to exit.\n\n");
     State *state = (State*) malloc(sizeof(State));
 
-    char *expr;
+    char *expr = (char*) malloc(sizeof(char) * 1000);
 
     do 
     {
         printf("Prelude:>> ");
         scanf("%[^\n]s",expr);
+        printf("Expr: %s\n",expr);
         fflush(stdin);
         Result res = eval(state,expr);
         printf("%s\n",res.value);

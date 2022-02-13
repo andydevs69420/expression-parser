@@ -24,9 +24,21 @@ Result evaluate(State *S,Node *node)
             return eval_int(S,node);
         case NFLT:
             return eval_flt(S,node);
+        case NUNA:
+            return eval_unary(S,node);
+        case NEXP:
+            return eval_exponential(S,node);
         case NARI:
             return eval_arithmetic(S,node);
-
+        default: 
+        {
+            // debug
+            printf(
+                "\033[31mun-implemented node \"%d\"\n\033[0m",
+                node->type
+            );
+            exit(1);
+        }
     }
 }
 
@@ -72,8 +84,122 @@ Result eval_flt(State *S,Node *node)
     return rs;
 }
 
+Result eval_unary(State *S,Node *node)
+{
+    Token op;
+    Result rs,expr;
+
+    op   = node->unary->op;
+    expr = evaluate(S,node->unary->expr);
+    
+    rs.type  = expr.type;
+    rs.typen = expr.typen;
+
+    if (strcmp(op.token,"+") == 0)
+    {
+        switch (rs.type)
+        {
+            case EINT:
+            {
+                rs.value = format("%d",+atoi(expr.value));
+                break;
+            }
+            case EFLOAT:
+            {
+                rs.value = format("%lf",+atof(expr.value));
+                break;
+            }
+        }
+    }
+    else if (strcmp(op.token,"-") == 0)
+    {
+        switch (rs.type)
+        {
+            case EINT:
+            {
+                rs.value = format("%d",-atoi(expr.value));
+                break;
+            }
+            case EFLOAT:
+            {
+                rs.value = format("%lf",-atof(expr.value));
+                break;
+            }
+        }
+    }
+    return rs;
+}
+
+Result eval_exponential(State *S,Node *node)
+{
+    Token op;
+    Result rs,lhs,rhs;
+
+    op  = node->expn->op; 
+    lhs = evaluate(S,node->expn->lhs);   
+    rhs = evaluate(S,node->expn->rhs);   
+
+    if (!(lhs.type == EFLOAT || rhs.type == EFLOAT))
+    {
+        rs.type  = EINT;
+        rs.typen = "int";
+    }
+    else if(lhs.type == EFLOAT || rhs.type == EFLOAT)
+    {
+        rs.type  = EFLOAT;
+        rs.typen = "float";
+    }
+    else
+    {
+        printf(
+            "\033[31mTypeError: invalid op \"%s\" for type(s)\n\n%s\n\n\033[0m",
+            op.token,
+            getPos(S,op)
+        );
+        exit(1);
+    }
+
+    if (strcmp(op.token,"^") == 0)
+    {
+        switch (rs.type)
+        {
+            case EINT:
+            {
+                int a = atoi(lhs.value);
+                int b = atoi(rhs.value);
+                rs.value = format("%.2lf",pow(a,b));
+                break;
+            }
+            case EFLOAT:
+            {
+                if (lhs.type == EINT && rhs.type == EFLOAT)
+                {
+                    int a    = atoi(lhs.value);
+                    float b  = atof(rhs.value);
+                    rs.value = format("%.2lf",pow(a,b));
+                }
+                else if (lhs.type == EFLOAT && rhs.type == EINT)
+                {
+                    float a  = atof(lhs.value);
+                    int b    = atoi(rhs.value);
+                    rs.value = format("%lf",pow(a,b));
+                }
+                else
+                {
+                    float a  = atof(rhs.value);
+                    float b  = atof(lhs.value);
+                    rs.value = format("%lf",pow(a,b));
+                }
+                break;
+            }
+        }
+    }
+    return rs;
+}
+
 Result eval_arithmetic(State *S,Node *node)
 {
+    // FIXME: use strtol,strtod,etc instead!!
     Token op;
     Result rs,lhs,rhs;
 
@@ -94,8 +220,10 @@ Result eval_arithmetic(State *S,Node *node)
     else
     {
         printf(
-            "\033[31mTypeError: invalid op \"%s\" for type(s)\n\n%s\n\n\033[0m",
+            "\033[31mTypeError: invalid op \"%s\" for type(s) %s and %s\n\n%s\n\n\033[0m",
             op.token,
+            lhs.typen,
+            rhs.typen,
             getPos(S,op)
         );
         exit(1);
@@ -144,6 +272,17 @@ Result eval_arithmetic(State *S,Node *node)
             {
                 int a = atoi(lhs.value);
                 int b = atoi(rhs.value);
+                
+                if (a == 0 || b == 0)
+                {
+                    printf(
+                        "\033[31mZeroDivisionError: division of \"%d / %d\"\n\n%s\n\n\033[0m",
+                        a,
+                        b,
+                        getPos(S,op)
+                    );
+                    exit(1);
+                }
                 rs.value = format("%d",(a/b));
                 break;
             }
@@ -153,18 +292,51 @@ Result eval_arithmetic(State *S,Node *node)
                 {
                     int a    = atoi(lhs.value);
                     float b  = atof(rhs.value);
+
+                    if (a == 0 || b == 0)
+                    {
+                        printf(
+                            "\033[31mZeroDivisionError: division of \"%d / %lf\"\n\n%s\n\n\033[0m",
+                            op.token,
+                            getPos(S,op)
+                        );
+                        exit(1);
+                    }
+
                     rs.value = format("%.2lf",(a/b));
                 }
                 else if (lhs.type == EFLOAT && rhs.type == EINT)
                 {
                     float a  = atof(lhs.value);
                     int b    = atoi(rhs.value);
+
+                    if (a == 0 || b == 0)
+                    {
+                        printf(
+                            "\033[31mZeroDivisionError: division of \"%lf / %d\"\n\n%s\n\n\033[0m",
+                            op.token,
+                            getPos(S,op)
+                        );
+                        exit(1);
+                    }
+
                     rs.value = format("%lf",(a/b));
                 }
                 else
                 {
                     float a  = atof(rhs.value);
                     float b  = atof(lhs.value);
+
+                    if (a == 0 || b == 0)
+                    {
+                        printf(
+                            "\033[31mZeroDivisionError: division of \"%lf / %lf\"\n\n%s\n\n\033[0m",
+                            op.token,
+                            getPos(S,op)
+                        );
+                        exit(1);
+                    }
+
                     rs.value = format("%lf",(a/b));
                 }
                 break;

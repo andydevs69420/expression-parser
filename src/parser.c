@@ -15,13 +15,6 @@ void Parser(State *S,char *expr)
 {
     Tokenizer(S,expr);
     S->parser.ctok = getNext(S);
-
-    //  printf(
-    //     "SyntaxError: invalid syntax \"%s\"\n\n%s\n\n",
-    //     S->parser.ctok.token,
-    //     getPos(S,S->parser.ctok)
-    // );
-    // exit(1);
 }
 
 int match(State *S,char *pattern)
@@ -163,7 +156,7 @@ Node *call(State *S)
 {
     Node *atomr = atom(S);
 
-    if (!match(S,"(")) return atomr;
+    if (!match(S,"(") || atomr == NULL) return atomr;
 
     // no recursive all
     // call
@@ -204,7 +197,7 @@ Node *call(State *S)
     Token rpar = S->parser.ctok;
 
     expect(S,"(");
-
+    
     calln->call->params = call_params(S);
 
     if (!match(S,")"))
@@ -216,14 +209,11 @@ Node *call(State *S)
         );
 
         printf(
-            "\033[31mexpected token \"%s\", got \"%s\"\n\n%s\n\n\033[0m",
-            ")",
+            "\033[31mexpected token \")\", got \"%s\"\n\n%s\n\n\033[0m",
             S->parser.ctok.token,
             getPos(S,S->parser.ctok)
         );
-
         exit(1);
-
     }
 
     expect(S,")");
@@ -233,14 +223,14 @@ Node *call(State *S)
 
 Call_param *call_params(State *S)
 {
-    Call_param *cparam;
+    Call_param *cparam = (Call_param*) malloc(sizeof(Call_param));
 
     cparam->pcount = 0;
     cparam->parameters = (Node**) malloc(sizeof(Node*));
 
     Node *param = expression(S);
     if (param == NULL) return cparam;
-
+    
     cparam->pcount++;
     cparam->parameters[cparam->pcount-1] = param;
     cparam->parameters = (Node**) realloc(
@@ -282,7 +272,7 @@ Node *exponential(State *S)
 {
     Node *node = call(S);
     if (node == NULL) return node;
-
+    
     if (match(S,"^"))
     {
         Node *newn = (Node*) malloc(sizeof(Node));
@@ -297,8 +287,8 @@ Node *exponential(State *S)
             if (match(S,"^"))
                 nextToken();
             
-            Node *rhs = exponential(S);
-            
+            Node *rhs = factor(S);
+                        
             if (rhs == NULL)
             {
                 printf(
@@ -350,7 +340,7 @@ Node *factor(State *S)
             exit(1);
         }
         
-        node->unary->expr = factor(S);
+        node->unary->expr = expr;
         return node;
     }
     else if (match(S,"("))
@@ -426,7 +416,7 @@ Node *multiplicative(State *S)
             {
                 nextToken();
             }
-
+           
             Node *rhs = multiplicative(S);
             
             if (rhs == NULL)
