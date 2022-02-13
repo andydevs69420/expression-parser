@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "format.h"
 #include "tokenizer.h"
 
 #ifndef PARSER_H

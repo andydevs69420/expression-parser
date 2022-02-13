@@ -38,7 +38,7 @@ void expect(State *S,char *pattern)
     else
     {
         printf(
-            "SyntaxError: expected token \"%s\", got \"%s\"\n\n%s\n\n",
+            "\033[31mSyntaxError: expected token \"%s\", got \"%s\"\n\n%s\n\n\033[0m",
             pattern,
             S->parser.ctok.token,
             getPos(S,S->parser.ctok)
@@ -53,7 +53,6 @@ Node *parse(State *S)
     while (!parseeof(S))
     {
         ast = null_safe_expr(S);
-        printf("STUCK!!\n");
     }
     return ast;
 }
@@ -119,7 +118,7 @@ Node *pnumber(State *S)
     if (S->parser.ctok.type!= INT)
     {
         printf(
-            "SyntaxError: unexpected token \"%s\", remove these token\n\n%s\n\n",
+            "\033[31mSyntaxError: unexpected token \"%s\", remove these token\n\n%s\n\n\033[0m",
             tok.token,
             getPos(S,tok)
         );
@@ -136,13 +135,15 @@ Node *pnumber(State *S)
                strlen(tok.token) +
                strlen(next->integer->value.token);
 
-    char *token = (char*) malloc(sizeof(char) * (size + 1));
+    char *token = (char*) malloc(sizeof(char) * size);
 
-    strcat(token,intnode->integer->value.token);
-    strcat(token,tok.token);
-    strcat(token,next->integer->value.token);
-
-    token[size-1] = '\0';
+    sprintf(
+        token,
+        "%s%s%s",
+        intnode->integer->value.token,
+        tok.token,
+        next->integer->value.token
+    );
 
     Token newtok;
     newtok.type  = FLT;
@@ -151,8 +152,6 @@ Node *pnumber(State *S)
     newtok.token = token;
 
     new->floatn->value = newtok;
-
-    nextToken();
 
     free(intnode);
     free(next);
@@ -190,7 +189,7 @@ Node *call(State *S)
         }
 
         printf(
-            "TypeError: \"%s\" is not callable. remove these token\n\n%s\n\n",
+            "\033[31mTypeError: \"%s\" is not callable\n\n%s\n\n\033[0m",
             typename,
             getPos(S,ref)
         );
@@ -211,13 +210,13 @@ Node *call(State *S)
     if (!match(S,")"))
     {
         printf(
-            "SyntaxError: unclosed parenthesis \"%s\", remove these token\n\n%s\n\n",
+            "\033[31mSyntaxError: unclosed parenthesis \"%s\", add extra \")\"\n\n%s\n\n\033[0m",
             rpar.token,
             getPos(S,rpar)
         );
 
         printf(
-            "expected token \"%s\", got \"%s\"\n\n%s\n\n",
+            "\033[31mexpected token \"%s\", got \"%s\"\n\n%s\n\n\033[0m",
             ")",
             S->parser.ctok.token,
             getPos(S,S->parser.ctok)
@@ -262,7 +261,7 @@ Call_param *call_params(State *S)
         if (param == NULL)
         {
             printf(
-                "SyntaxError: remove extra \"%s\"\n\n%s\n\n",
+                "\033[31mSyntaxError: remove extra \"%s\"\n\n%s\n\n\033[0m",
                 comma.token,
                 getPos(S,comma)
             );
@@ -303,7 +302,7 @@ Node *exponential(State *S)
             if (rhs == NULL)
             {
                 printf(
-                    "SyntaxError: expects \"expression\" after \"%s\", got \"%s\"\n\n%s\n\n",
+                    "\033[31mSyntaxError: expects \"expression\" after \"%s\", got \"%s\"\n\n%s\n\n\033[0m",
                     newn->expn->op.token,
                     S->parser.ctok.token,
                     getPos(S,S->parser.ctok)
@@ -337,14 +336,14 @@ Node *factor(State *S)
         if (expr == NULL)
         {
             printf(
-                "SyntaxError: expects \"expression\" after \"%s\", got \"%s\"\n\n%s\n\n",
+                "\033[31mSyntaxError: expects \"expression\" after \"%s\", got \"%s\"\n\n%s\n\n\033[0m",
                 tok.token,
                 S->parser.ctok.token,
                 getPos(S,S->parser.ctok)
             );
 
             printf(
-                "invalid expression \"%s\"\n\n%s\n\n",
+                "\033[31minvalid expression \"%s\"\n\n%s\n\n\033[0m",
                 S->parser.ctok.token,
                 getPos(S,S->parser.ctok)
             );
@@ -363,12 +362,12 @@ Node *factor(State *S)
         if (expr == NULL)
         {
             printf(
-                "SyntaxError: expects \"expression\", after \"%s\"\n\n%s\n\n",
+                "\033[31mSyntaxError: expects \"expression\", after \"%s\"\n\n%s\n\n\033[0m",
                 tok.token,
                 getPos(S,tok)
             );
             printf(
-                "invalid expression \"%s\"\n\n%s\n\n",
+                "\033[31minvalid expression \"%s\"\n\n%s\n\n\033[0m",
                 S->parser.ctok.token,
                 getPos(S,S->parser.ctok)
             );
@@ -379,13 +378,13 @@ Node *factor(State *S)
         if (!match(S,")"))
         {
             printf(
-                "SyntaxError: unclosed parenthesis \"%s\", remove these token\n\n%s\n\n",
+                "\033[31mSyntaxError: unclosed parenthesis \"%s\", add extra \")\"\n\n%s\n\n\033[0m",
                 tok.token,
                 getPos(S,tok)
             );
 
             printf(
-                "expected token \"%s\", got \"%s\"\n\n%s\n\n",
+                "\033[31mexpected token \"%s\", got \"%s\"\n\n%s\n\n\033[0m",
                 ")",
                 S->parser.ctok.token,
                 getPos(S,S->parser.ctok)
@@ -433,7 +432,7 @@ Node *multiplicative(State *S)
             if (rhs == NULL)
             {
                 printf(
-                    "SyntaxError: expects \"expression\" after \"%s\", got \"%s\"\n\n%s\n\n",
+                    "\033[31mSyntaxError: expects \"expression\" after \"%s\", got \"%s\"\n\n%s\n\n\033[0m",
                     newn->arithmetic->op.token,
                     S->parser.ctok.token,
                     getPos(S,S->parser.ctok)
@@ -478,7 +477,7 @@ Node *addetive(State *S)
             if (rhs == NULL)
             {
                 printf(
-                    "SyntaxError: expects \"expression\" after \"%s\", got \"%s\"\n\n%s\n\n",
+                    "\033[31mSyntaxError: expects \"expression\" after \"%s\", got \"%s\"\n\n%s\n\n\033[0m",
                     newn->arithmetic->op.token,
                     S->parser.ctok.token,
                     getPos(S,S->parser.ctok)
@@ -505,7 +504,7 @@ Node *null_safe_expr(State *S)
     if (expr == NULL)
     {
         printf(
-            "SyntaxError: invalid syntax \"%s\"\n\n%s\n\n",
+            "\033[31mSyntaxError: invalid syntax \"%s\"\n\n%s\n\n\033[0m",
             S->parser.ctok.token,
             getPos(S,S->parser.ctok)
         );

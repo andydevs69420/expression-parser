@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "state.h"
-#include "parser.h"
+#include "eval.h"
 
 int main()
 {
@@ -33,16 +33,10 @@ int main()
         printf("Prelude:>> ");
         scanf("%[^\n]s",expr);
         fflush(stdin);
-        Parser(state,expr);
-        Node *ast = parse(state);
-        printf("expr: %s %d \n",expr,ast->type);
-
+        Result res = eval(state,expr);
+        printf("%s\n",res.value);
     } while (strcmp(expr,"quit") != 0);
 
-    #if defined(_WIN32) || defined(_WIN64)
-        system("cls");
-    #elif defined(linux)
-        system("clear");
-    #endif
     free(state);
+    return 0;
 }

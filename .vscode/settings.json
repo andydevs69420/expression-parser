@@ -6,6 +6,8 @@
         "xutility": "c",
         "string.h": "c",
         "stdio.h": "c",
-        "tokenizer.h": "c"
+        "tokenizer.h": "c",
+        "eval.h": "c",
+        "format.h": "c"
     }
 }

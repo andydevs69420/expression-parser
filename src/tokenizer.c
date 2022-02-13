@@ -84,7 +84,7 @@ Token getNext(State *S)
             tok.token = ch;
 
             printf(
-                "SyntaxError: invalid token \"%c\"\n\n%s\n\n",
+                "\033[31mSyntaxError: invalid token \"%c\"\n\n%s\n\n\033[0m",
                 S->tokenizer.lookup,
                 getPos(S,tok)
             );
