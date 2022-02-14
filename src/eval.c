@@ -24,6 +24,8 @@ Result evaluate(State *S,Node *node)
             return eval_int(S,node);
         case NFLT:
             return eval_flt(S,node);
+        case NCALL:
+            return eval_call(S,node);
         case NUNA:
             return eval_unary(S,node);
         case NEXP:
@@ -54,6 +56,12 @@ Result eval_iden(State *S,Node *node)
         rs.typen = "float";
         rs.value = format("%1.2f",PI);
     }
+    else if(strcmp(sym,"log") == 0)
+    {
+        rs.type  = EFUNC;
+        rs.typen = "function";
+        rs.value = format("<function %s>",sym);
+    }
     else
     {
         printf(
@@ -81,6 +89,62 @@ Result eval_flt(State *S,Node *node)
     rs.type  = EFLOAT;
     rs.typen = "float";
     rs.value = format("%lf",atof(node->floatn->value.token));
+    return rs;
+}
+
+Result eval_call(State *S,Node *node)
+{
+    // TODO: implement!!
+    Result rs,obj;
+    obj = evaluate(S,node->call->object);
+    Call_param *params = node->call->params;
+   
+    if (obj.type != EFUNC)
+    {
+        printf(
+            "\033[31mTypeError: \"%s\" is not a function\n\033[0m",
+            obj.value
+        );
+        exit(1);
+    }
+
+    if (strcmp(obj.value,"<function log>") == 0)
+    {
+        if (params->pcount != 1)
+        {
+            printf(
+                "\033[31mTypeError: \"%s\" requires 1 parameter, got %d\n\033[0m",
+                obj.value,
+                params->pcount
+            );
+            exit(1);
+        }
+       
+        Result param0 = evaluate(S,params->parameters[0]);
+       
+        if (param0.type != EFLOAT)
+        {
+            printf(
+                "\033[31mTypeError: requires \"log(x:float)\", but \"log(x:%s)\" given\n\033[0m",
+                param0.typen
+            );
+            exit(1);
+        }
+
+        rs.type  = EFLOAT;
+        rs.typen = "float";
+        rs.value = format("%lf",log(atof(param0.value)));
+    }
+    else
+    {
+        // debug
+        printf(
+            "\033[31mun-implemented function \"%s\"\n\033[0m",
+            obj.value
+        );
+        exit(1);
+    }
+
     return rs;
 }
 
@@ -207,12 +271,20 @@ Result eval_arithmetic(State *S,Node *node)
     lhs = evaluate(S,node->arithmetic->lhs);   
     rhs = evaluate(S,node->arithmetic->rhs);   
 
-    if (!(lhs.type == EFLOAT || rhs.type == EFLOAT))
+    if 
+    (
+        (lhs.type == EINT && rhs.type == EINT)
+    )
     {
         rs.type  = EINT;
         rs.typen = "int";
     }
-    else if(lhs.type == EFLOAT || rhs.type == EFLOAT)
+    else if 
+    (
+        (lhs.type == EFLOAT && rhs.type == EFLOAT) ||
+        (lhs.type == EFLOAT && rhs.type == EINT)   ||
+        (lhs.type == EINT && rhs.type == EFLOAT)
+    )
     {
         rs.type  = EFLOAT;
         rs.typen = "float";

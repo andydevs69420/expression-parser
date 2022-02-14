@@ -18,7 +18,8 @@ enum ResultType
 {
     EINT   = 0,
     EFLOAT = 1,
-    EUNARY = 2
+    EFUNC  = 2,
+    EUNARY = 3
 };
 
 typedef struct RESULT
@@ -33,6 +34,7 @@ Result evaluate(State*,Node*);
 Result eval_iden(State*,Node*);
 Result eval_int(State*,Node*);
 Result eval_flt(State*,Node*);
+Result eval_call(State*,Node*);
 Result eval_unary(State*,Node*);
 Result eval_exponential(State*,Node*);
 Result eval_arithmetic(State*,Node*);

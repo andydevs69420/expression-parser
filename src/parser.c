@@ -95,14 +95,7 @@ Node *integer(State *S)
 Node *pnumber(State *S)
 {
     Node *intnode = integer(S);
-    if 
-    (!
-        (
-            match(S,".") ||
-            match(S,"e") ||
-            match(S,"E")
-        )
-    ) 
+    if (!match(S,".")) 
         return intnode;
 
     Token tok = S->parser.ctok;
@@ -119,7 +112,7 @@ Node *pnumber(State *S)
     }
 
     Node *next = integer(S);
-
+   
     Node *new = (Node*) malloc(sizeof(Node));
     new->type = NFLT;
     new->floatn = (Flt_node*) malloc(sizeof(Flt_node));
@@ -148,7 +141,7 @@ Node *pnumber(State *S)
 
     free(intnode);
     free(next);
-
+    // printf("returned\n");
     return new;
 }
 
