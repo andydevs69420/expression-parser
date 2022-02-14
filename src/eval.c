@@ -134,6 +134,7 @@ Result eval_call(State *S,Node *node)
         rs.type  = EFLOAT;
         rs.typen = "float";
         rs.value = format("%lf",log(atof(param0.value)));
+        
     }
     else
     {

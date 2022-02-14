@@ -32,7 +32,6 @@ int main()
     {
         printf("Prelude:>> ");
         scanf("%[^\n]s",expr);
-        printf("Expr: %s\n",expr);
         fflush(stdin);
         Result res = eval(state,expr);
         printf("%s\n",res.value);
